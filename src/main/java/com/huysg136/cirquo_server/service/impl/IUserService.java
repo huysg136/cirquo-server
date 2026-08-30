@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,18 +38,24 @@ public class IUserService implements UserService {
 
     @Override
     public List<ListUserResponse> read() {
-        return userRepository.findAll().stream()
-                .map(user -> ListUserResponse.builder()
-                        .id(user.getId())
-                        .email(user.getEmail())
-                        .fullName(user.getFullName())
-                        .phone(user.getPhone())
-                        .status(user.getStatus())
-                        .createdAt(user.getCreatedAt())
-                        .updatedAt(user.getUpdatedAt())
-                        .build())
-                .collect(Collectors.toList());
+        List<User> users = userRepository.findAll();
+        List<ListUserResponse> responseList = new ArrayList<>();
 
+        for (User user: users){
+            ListUserResponse response = ListUserResponse.builder()
+                    .id(user.getId())
+                    .email(user.getEmail())
+                    .fullName(user.getFullName())
+                    .phone(user.getPhone())
+                    .status(user.getStatus())
+                    .createdAt(user.getCreatedAt())
+                    .updatedAt(user.getUpdatedAt())
+                    .build();
+
+            responseList.add(response);
+        }
+
+        return responseList;
     }
 
     @Override
