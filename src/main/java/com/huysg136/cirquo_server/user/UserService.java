@@ -1,8 +1,8 @@
 package com.huysg136.cirquo_server.user;
 
-import com.huysg136.cirquo_server.user.dto.CreateUserRequest;
-import com.huysg136.cirquo_server.user.dto.UpdateUserRequest;
-import com.huysg136.cirquo_server.user.dto.UserResponse;
+import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
+import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
+import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface UserService {
     void create(CreateUserRequest createUserRequest);
 
-    List<UserResponse> read();
+    List<ListUserResponse> read();
 
     void update(UUID id, UpdateUserRequest updateUserRequest);
 

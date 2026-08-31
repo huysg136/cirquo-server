@@ -1,8 +1,8 @@
 package com.huysg136.cirquo_server.user;
 
-import com.huysg136.cirquo_server.user.dto.CreateUserRequest;
-import com.huysg136.cirquo_server.user.dto.UpdateUserRequest;
-import com.huysg136.cirquo_server.user.dto.UserResponse;
+import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
+import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
+import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
@@ -10,7 +10,7 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserMapper {
-    UserResponse toResponse(User user);
+    ListUserResponse toResponse(User user);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)

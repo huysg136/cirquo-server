@@ -1,8 +1,9 @@
 package com.huysg136.cirquo_server.user;
 
-import com.huysg136.cirquo_server.user.dto.CreateUserRequest;
-import com.huysg136.cirquo_server.user.dto.UpdateUserRequest;
-import com.huysg136.cirquo_server.user.dto.UserResponse;
+import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
+import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
+import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,19 +19,19 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<String> createUser(@RequestBody CreateUserRequest createUserRequest){
+    public ResponseEntity<String> createUser(@Valid @RequestBody CreateUserRequest createUserRequest){
         userService.create(createUserRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body("User created successfully!");
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers(){
-        List<UserResponse> users = userService.read();
+    public ResponseEntity<List<ListUserResponse>> getAllUsers(){
+        List<ListUserResponse> users = userService.read();
         return ResponseEntity.status(HttpStatus.OK).body(users);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateUser(@PathVariable("id") UUID id, @RequestBody UpdateUserRequest updateUserRequest){
+    public ResponseEntity<String> updateUser(@PathVariable("id") UUID id, @Valid @RequestBody UpdateUserRequest updateUserRequest){
         userService.update(id, updateUserRequest);
         return ResponseEntity.status(HttpStatus.OK).body("User updated successfully!");
     }

@@ -5,9 +5,9 @@ import com.huysg136.cirquo_server.user.UserMapper;
 import com.huysg136.cirquo_server.user.UserRepository;
 import com.huysg136.cirquo_server.user.UserService;
 import com.huysg136.cirquo_server.user.UserStatus;
-import com.huysg136.cirquo_server.user.dto.CreateUserRequest;
-import com.huysg136.cirquo_server.user.dto.UpdateUserRequest;
-import com.huysg136.cirquo_server.user.dto.UserResponse;
+import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
+import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
+import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserResponse> read() {
+    public List<ListUserResponse> read() {
         return userRepository.findAll().stream().map(userMapper::toResponse).toList();
     }
 
