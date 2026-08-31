@@ -1,5 +1,7 @@
 package com.huysg136.cirquo_server.user;
 
+import com.huysg136.cirquo_server.common.ApiResponse;
+import com.huysg136.cirquo_server.common.BaseController;
 import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;
@@ -15,19 +17,19 @@ import java.util.UUID;
 @RestController
 @RequestMapping(value = "/api/v1/users")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController extends BaseController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<String> createUser(@Valid @RequestBody CreateUserRequest createUserRequest){
+    public ApiResponse<String> createUser(@Valid @RequestBody CreateUserRequest createUserRequest){
         userService.create(createUserRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body("User created successfully!");
+        return createSuccessResponse("User created successfully!");
     }
 
     @GetMapping
-    public ResponseEntity<List<ListUserResponse>> getAllUsers(){
+    public ApiResponse<List<ListUserResponse>> getAllUsers(){
         List<ListUserResponse> users = userService.read();
-        return ResponseEntity.status(HttpStatus.OK).body(users);
+        return createSuccessResponse(users);
     }
 
     @PutMapping("/{id}")

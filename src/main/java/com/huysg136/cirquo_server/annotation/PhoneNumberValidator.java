@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 public class PhoneNumberValidator implements ConstraintValidator<PhoneNumber, String> {
 
-    private static final java.util.regex.Pattern PHONE_PATTERN = Pattern.compile("^(?:0[35789]\\d{8}|\\+84[35789]\\d{8})$");
+    private static final java.util.regex.Pattern PHONE_PATTERN = Pattern.compile("^0[35789]\\d{8}$");
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
