@@ -1,12 +1,11 @@
 package com.huysg136.cirquo_server.user.entity;
 
+import com.huysg136.cirquo_server.common.BaseEntity;
 import com.huysg136.cirquo_server.user.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -14,17 +13,14 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+@SuperBuilder
+public class User extends BaseEntity {
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(name = "password_hash" ,nullable = false)
+    private String passwordHash;
 
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
@@ -32,25 +28,13 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserStatus status = UserStatus.ACTIVE;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
-    }
 }

@@ -5,7 +5,7 @@ import com.huysg136.cirquo_server.common.BaseController;
 import com.huysg136.cirquo_server.user.service.UserService;
 import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
-import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;
+import com.huysg136.cirquo_server.user.dto.response.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,7 +35,7 @@ public class UserController extends BaseController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ListUserResponse>>> getAllUsers() {
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
         return success(
                 HttpStatus.OK,
                 "Users retrieved successfully",

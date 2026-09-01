@@ -35,13 +35,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(errorCode, errors));
     }
 
-
-    // request
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBadRequest(
-            IllegalArgumentException exception
+    // app
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAppException(
+            AppException ex
     ) {
-        ErrorCode errorCode = ErrorCode.BAD_REQUEST;
+        ErrorCode errorCode = ex.getErrorCode();
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())

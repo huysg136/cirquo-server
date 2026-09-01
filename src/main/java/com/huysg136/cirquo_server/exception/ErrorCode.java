@@ -20,6 +20,18 @@ public enum ErrorCode {
             "Bad request"
     ),
 
+    EMAIL_ALREADY_EXISTS(
+            1003,
+            HttpStatus.CONFLICT,
+            "Email already exists"
+    ),
+
+    USER_NOT_FOUND(
+            1004,
+            HttpStatus.NOT_FOUND,
+            "User not found"
+    ),
+
     UNCATEGORIZED_ERROR(
             9999,
             HttpStatus.INTERNAL_SERVER_ERROR,
