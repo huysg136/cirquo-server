@@ -34,3 +34,7 @@ build/
 
 # Environment variables
 .env
+
+# Logs / crash reports
+*.log
+hs_err_pid*

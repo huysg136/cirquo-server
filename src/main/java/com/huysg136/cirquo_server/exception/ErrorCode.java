@@ -11,31 +11,37 @@ public enum ErrorCode {
     VALIDATION_ERROR(
             1001,
             HttpStatus.BAD_REQUEST,
-            "Validation failed"
+            "Validation failed!"
     ),
 
     BAD_REQUEST(
             1002,
             HttpStatus.BAD_REQUEST,
-            "Bad request"
+            "Bad request!"
     ),
 
     EMAIL_ALREADY_EXISTS(
             1003,
             HttpStatus.CONFLICT,
-            "Email already exists"
+            "Email already exists!"
     ),
 
     USER_NOT_FOUND(
             1004,
             HttpStatus.NOT_FOUND,
-            "User not found"
+            "User not found!"
+    ),
+
+    ADDRESS_NOT_FOUND(
+            1005,
+            HttpStatus.NOT_FOUND,
+            "Address not found!"
     ),
 
     UNCATEGORIZED_ERROR(
             9999,
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "Unexpected error"
+            "Unexpected error!"
     );
 
     private final int code;

@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
-    void create(CreateUserRequest createUserRequest);
+    UserResponse create(CreateUserRequest createUserRequest);
 
     List<UserResponse> read();
 
-    void update(UUID id, UpdateUserRequest updateUserRequest);
+    UserResponse update(UUID userId, UpdateUserRequest updateUserRequest);
 
-    void delete(UUID id);
+    void delete(UUID userId);
 }

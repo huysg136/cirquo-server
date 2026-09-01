@@ -22,15 +22,16 @@ public class UserController extends BaseController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> createUser(
+    public ResponseEntity<ApiResponse<UserResponse>> createUser(
             @Valid @RequestBody CreateUserRequest request
     ) {
-        userService.create(request);
+
+        UserResponse userResponse = userService.create(request);
 
         return success(
                 HttpStatus.CREATED,
-                "User created successfully",
-                null
+                "User created successfully!",
+                userResponse
         );
     }
 
@@ -38,34 +39,35 @@ public class UserController extends BaseController {
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
         return success(
                 HttpStatus.OK,
-                "Users retrieved successfully",
+                "Users retrieved successfully!",
                 userService.read()
         );
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> updateUser(
-            @PathVariable UUID id,
+    @PutMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
+            @PathVariable UUID userId,
             @Valid @RequestBody UpdateUserRequest request
     ) {
-        userService.update(id, request);
+
+        UserResponse userResponse = userService.update(userId, request);
 
         return success(
                 HttpStatus.OK,
-                "User updated successfully",
-                null
+                "User updated successfully!",
+                userResponse
         );
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-            @PathVariable UUID id
+            @PathVariable UUID userId
     ) {
-        userService.delete(id);
+        userService.delete(userId);
 
         return success(
                 HttpStatus.OK,
-                "User deleted successfully",
+                "User deleted successfully!",
                 null
         );
     }

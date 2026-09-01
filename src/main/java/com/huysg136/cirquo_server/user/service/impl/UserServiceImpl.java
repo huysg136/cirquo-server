@@ -16,6 +16,7 @@ import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,8 +30,9 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
+    @Transactional
     @Override
-    public void create(CreateUserRequest createUserRequest) {
+    public UserResponse create(CreateUserRequest createUserRequest) {
         if (userRepository.existsByEmail(createUserRequest.email())) {
             throw new EmailAlreadyExistsException();
         }
@@ -45,17 +47,20 @@ public class UserServiceImpl implements UserService {
         user.setStatus(UserStatus.ACTIVE);
         user.setRole(customerRole);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponse(savedUser);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<UserResponse> read() {
         return userRepository.findAll().stream().map(userMapper::toResponse).toList();
     }
 
+    @Transactional
     @Override
-    public void update(UUID id, UpdateUserRequest updateUserRequest) {
-        User user = userRepository.findById(id)
+    public UserResponse update(UUID userId, UpdateUserRequest updateUserRequest) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         if (!user.getEmail().equals(updateUserRequest.email())
@@ -64,12 +69,14 @@ public class UserServiceImpl implements UserService {
         }
 
         userMapper.updateEntity(updateUserRequest, user);
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponse(savedUser);
     }
 
+    @Transactional
     @Override
-    public void delete(UUID id) {
-        User user = userRepository.findById(id)
+    public void delete(UUID userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         userRepository.delete(user);
