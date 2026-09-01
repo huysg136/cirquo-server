@@ -20,8 +20,11 @@ public record ApiResponse<T>(
         );
     }
 
-    public static <T> ApiResponse<T> success(T result) {
-        return new ApiResponse<>(1000, "Successfully!", result);
+    public static <T> ApiResponse<T> success(
+            String message,
+            T result
+    ) {
+        return new ApiResponse<>(1000, message, result);
     }
 
     public static <T> ApiResponse<T> error(ErrorCode errorCode) {

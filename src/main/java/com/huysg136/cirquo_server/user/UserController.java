@@ -21,26 +21,51 @@ public class UserController extends BaseController {
     private final UserService userService;
 
     @PostMapping
-    public ApiResponse<String> createUser(@Valid @RequestBody CreateUserRequest createUserRequest){
-        userService.create(createUserRequest);
-        return createSuccessResponse("User created successfully!");
+    public ResponseEntity<ApiResponse<Void>> createUser(
+            @Valid @RequestBody CreateUserRequest request
+    ) {
+        userService.create(request);
+
+        return success(
+                HttpStatus.CREATED,
+                "User created successfully",
+                null
+        );
     }
 
     @GetMapping
-    public ApiResponse<List<ListUserResponse>> getAllUsers(){
-        List<ListUserResponse> users = userService.read();
-        return createSuccessResponse(users);
+    public ResponseEntity<ApiResponse<List<ListUserResponse>>> getAllUsers() {
+        return success(
+                HttpStatus.OK,
+                "Users retrieved successfully",
+                userService.read()
+        );
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateUser(@PathVariable("id") UUID id, @Valid @RequestBody UpdateUserRequest updateUserRequest){
-        userService.update(id, updateUserRequest);
-        return ResponseEntity.status(HttpStatus.OK).body("User updated successfully!");
+    public ResponseEntity<ApiResponse<Void>> updateUser(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateUserRequest request
+    ) {
+        userService.update(id, request);
+
+        return success(
+                HttpStatus.OK,
+                "User updated successfully",
+                null
+        );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable("id") UUID id){
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @PathVariable UUID id
+    ) {
         userService.delete(id);
-        return  ResponseEntity.status(HttpStatus.OK).body("User deleted successfully!");
+
+        return success(
+                HttpStatus.OK,
+                "User deleted successfully",
+                null
+        );
     }
 }

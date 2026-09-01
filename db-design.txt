@@ -1,5 +1,55 @@
+-- =========================================================
+-- CIRQUO DATABASE - V1
+-- PostgreSQL
+-- =========================================================
+
+
+-- =========================================================
+-- 1. ROLES
+-- =========================================================
+
+CREATE TABLE roles (
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+
+    CHECK (name IN ('CUSTOMER', 'STAFF', 'ADMIN'))
+);
+
+
+-- =========================================================
+-- 2. PERMISSIONS
+-- =========================================================
+
+CREATE TABLE permissions (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
+
+-- =========================================================
+-- 3. ROLE PERMISSIONS
+-- =========================================================
+
+CREATE TABLE role_permissions (
+    role_id UUID NOT NULL
+        REFERENCES roles(id),
+
+    permission_id UUID NOT NULL
+        REFERENCES permissions(id),
+
+    PRIMARY KEY (role_id, permission_id)
+);
+
+
+-- =========================================================
+-- 4. USERS
+-- =========================================================
+
 CREATE TABLE users (
     id UUID PRIMARY KEY,
+
+    role_id UUID NOT NULL
+        REFERENCES roles(id),
 
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -10,33 +60,983 @@ CREATE TABLE users (
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
 
     created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (status IN ('ACTIVE', 'BLOCKED'))
+);
+
+
+-- =========================================================
+-- 5. USER PERMISSIONS
+-- =========================================================
+
+CREATE TABLE user_permissions (
+    user_id UUID NOT NULL
+        REFERENCES users(id),
+
+    permission_id UUID NOT NULL
+        REFERENCES permissions(id),
+
+    PRIMARY KEY (user_id, permission_id)
+);
+
+
+-- =========================================================
+-- 6. USER ADDRESSES
+-- =========================================================
+
+CREATE TABLE user_addresses (
+    id UUID PRIMARY KEY,
+
+    user_id UUID NOT NULL
+        REFERENCES users(id),
+
+    recipient_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+
+    province VARCHAR(100) NOT NULL,
+    ward VARCHAR(100) NOT NULL,
+    address_line VARCHAR(255) NOT NULL,
+
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+
+    created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
 );
 
 
-CREATE TABLE roles (
+-- =========================================================
+-- 7. CATEGORIES
+-- =========================================================
+
+CREATE TABLE categories (
     id UUID PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
+
+    parent_id UUID
+        REFERENCES categories(id),
+
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(150) NOT NULL UNIQUE,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );
 
 
-CREATE TABLE user_roles (
-    user_id UUID NOT NULL REFERENCES users(id),
-    role_id UUID NOT NULL REFERENCES roles(id),
+-- =========================================================
+-- 8. BRANDS
+-- =========================================================
 
-    PRIMARY KEY (user_id, role_id)
-);
-
-
-CREATE TABLE permissions (
+CREATE TABLE brands (
     id UUID PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE
+
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(150) NOT NULL UNIQUE,
+
+    logo_url TEXT,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );
 
 
-CREATE TABLE user_permissions (
-    user_id UUID NOT NULL REFERENCES users(id),
-    permission_id UUID NOT NULL REFERENCES permissions(id),
+-- =========================================================
+-- 9. PRODUCTS
+-- =========================================================
 
-    PRIMARY KEY (user_id, permission_id)
+CREATE TABLE products (
+    id UUID PRIMARY KEY,
+
+    category_id UUID NOT NULL
+        REFERENCES categories(id),
+
+    brand_id UUID
+        REFERENCES brands(id),
+
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(300) NOT NULL UNIQUE,
+
+    short_description TEXT,
+    description TEXT,
+
+    specs JSONB,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );
+
+
+-- =========================================================
+-- 10. PRODUCT VARIANTS
+-- =========================================================
+
+CREATE TABLE product_variants (
+    id UUID PRIMARY KEY,
+
+    product_id UUID NOT NULL
+        REFERENCES products(id),
+
+    sku VARCHAR(100) NOT NULL UNIQUE,
+
+    name VARCHAR(255),
+
+    price NUMERIC(15, 0) NOT NULL,
+    compare_at_price NUMERIC(15, 0),
+
+    attributes JSONB,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (price >= 0),
+
+    CHECK (
+        compare_at_price IS NULL
+        OR compare_at_price >= 0
+    ),
+
+    CHECK (status IN ('ACTIVE', 'INACTIVE'))
+);
+
+
+-- =========================================================
+-- 11. PRODUCT IMAGES
+-- =========================================================
+
+CREATE TABLE product_images (
+    id UUID PRIMARY KEY,
+
+    product_id UUID NOT NULL
+        REFERENCES products(id),
+
+    variant_id UUID
+        REFERENCES product_variants(id),
+
+    image_url TEXT NOT NULL,
+
+    sort_order INT NOT NULL DEFAULT 0,
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+
+    created_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (sort_order >= 0)
+);
+
+
+-- =========================================================
+-- 12. INVENTORIES
+-- =========================================================
+
+CREATE TABLE inventories (
+    variant_id UUID PRIMARY KEY
+        REFERENCES product_variants(id),
+
+    quantity INT NOT NULL DEFAULT 0,
+
+    reserved_quantity INT NOT NULL DEFAULT 0,
+
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (quantity >= 0),
+
+    CHECK (reserved_quantity >= 0),
+
+    CHECK (reserved_quantity <= quantity)
+);
+
+
+-- =========================================================
+-- 13. STOCK MOVEMENTS
+-- =========================================================
+
+CREATE TABLE stock_movements (
+    id UUID PRIMARY KEY,
+
+    variant_id UUID NOT NULL
+        REFERENCES product_variants(id),
+
+    movement_type VARCHAR(30) NOT NULL,
+
+    quantity INT NOT NULL,
+
+    reference_type VARCHAR(50),
+    reference_id UUID,
+
+    note TEXT,
+
+    created_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (
+        movement_type IN (
+            'IMPORT',
+            'SALE',
+            'RETURN',
+            'ADJUSTMENT'
+        )
+    ),
+
+    CHECK (quantity <> 0)
+);
+
+
+-- =========================================================
+-- 14. CARTS
+-- =========================================================
+
+CREATE TABLE carts (
+    id UUID PRIMARY KEY,
+
+    user_id UUID NOT NULL UNIQUE
+        REFERENCES users(id),
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);
+
+
+-- =========================================================
+-- 15. CART ITEMS
+-- =========================================================
+
+CREATE TABLE cart_items (
+    id UUID PRIMARY KEY,
+
+    cart_id UUID NOT NULL
+        REFERENCES carts(id),
+
+    variant_id UUID NOT NULL
+        REFERENCES product_variants(id),
+
+    quantity INT NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT uq_cart_items_cart_variant
+        UNIQUE (cart_id, variant_id),
+
+    CHECK (quantity > 0)
+);
+
+
+-- =========================================================
+-- 16. WISHLISTS
+-- =========================================================
+
+CREATE TABLE wishlists (
+    user_id UUID NOT NULL
+        REFERENCES users(id),
+
+    product_id UUID NOT NULL
+        REFERENCES products(id),
+
+    created_at TIMESTAMPTZ NOT NULL,
+
+    PRIMARY KEY (user_id, product_id)
+);
+
+
+-- =========================================================
+-- 17. COUPONS
+-- =========================================================
+
+CREATE TABLE coupons (
+    id UUID PRIMARY KEY,
+
+    code VARCHAR(50) NOT NULL UNIQUE,
+
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+
+    discount_type VARCHAR(20) NOT NULL,
+
+    discount_value NUMERIC(15, 0) NOT NULL,
+
+    max_discount_amount NUMERIC(15, 0),
+
+    min_order_amount NUMERIC(15, 0)
+        NOT NULL DEFAULT 0,
+
+    usage_limit INT,
+    usage_limit_per_user INT,
+
+    start_at TIMESTAMPTZ NOT NULL,
+    end_at TIMESTAMPTZ NOT NULL,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (
+        discount_type IN (
+            'FIXED',
+            'PERCENTAGE'
+        )
+    ),
+
+    CHECK (discount_value >= 0),
+
+    CHECK (
+        max_discount_amount IS NULL
+        OR max_discount_amount >= 0
+    ),
+
+    CHECK (min_order_amount >= 0),
+
+    CHECK (
+        usage_limit IS NULL
+        OR usage_limit > 0
+    ),
+
+    CHECK (
+        usage_limit_per_user IS NULL
+        OR usage_limit_per_user > 0
+    ),
+
+    CHECK (status IN ('ACTIVE', 'INACTIVE')),
+
+    CHECK (end_at > start_at)
+);
+
+
+-- =========================================================
+-- 18. ORDERS
+-- =========================================================
+
+CREATE TABLE orders (
+    id UUID PRIMARY KEY,
+
+    user_id UUID NOT NULL
+        REFERENCES users(id),
+
+    coupon_id UUID
+        REFERENCES coupons(id),
+
+    order_code VARCHAR(50) NOT NULL UNIQUE,
+
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+
+    subtotal NUMERIC(15, 0) NOT NULL,
+
+    discount_amount NUMERIC(15, 0)
+        NOT NULL DEFAULT 0,
+
+    shipping_fee NUMERIC(15, 0)
+        NOT NULL DEFAULT 0,
+
+    total_amount NUMERIC(15, 0) NOT NULL,
+
+    coupon_code VARCHAR(50),
+    coupon_discount_type VARCHAR(20),
+    coupon_discount_value NUMERIC(15, 0),
+
+    note TEXT,
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    completed_at TIMESTAMPTZ,
+    cancelled_at TIMESTAMPTZ,
+
+    CHECK (
+        status IN (
+            'PENDING',
+            'CONFIRMED',
+            'PROCESSING',
+            'SHIPPING',
+            'COMPLETED',
+            'CANCELLED'
+        )
+    ),
+
+    CHECK (subtotal >= 0),
+
+    CHECK (discount_amount >= 0),
+
+    CHECK (shipping_fee >= 0),
+
+    CHECK (total_amount >= 0),
+
+    CHECK (
+        coupon_discount_value IS NULL
+        OR coupon_discount_value >= 0
+    ),
+
+    CONSTRAINT chk_orders_total_amount
+        CHECK (
+            total_amount =
+            subtotal - discount_amount + shipping_fee
+        )
+);
+
+
+-- =========================================================
+-- 19. ORDER ITEMS
+-- =========================================================
+
+CREATE TABLE order_items (
+    id UUID PRIMARY KEY,
+
+    order_id UUID NOT NULL
+        REFERENCES orders(id),
+
+    variant_id UUID
+        REFERENCES product_variants(id),
+
+    product_name VARCHAR(255) NOT NULL,
+
+    variant_name VARCHAR(255),
+
+    sku VARCHAR(100) NOT NULL,
+
+    unit_price NUMERIC(15, 0) NOT NULL,
+
+    quantity INT NOT NULL,
+
+    total_price NUMERIC(15, 0) NOT NULL,
+
+    CHECK (unit_price >= 0),
+
+    CHECK (quantity > 0),
+
+    CHECK (total_price >= 0),
+
+    CHECK (
+        total_price = unit_price * quantity
+    )
+);
+
+
+-- =========================================================
+-- 20. ORDER ADDRESSES
+-- =========================================================
+
+CREATE TABLE order_addresses (
+    order_id UUID PRIMARY KEY
+        REFERENCES orders(id),
+
+    recipient_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+
+    province VARCHAR(100) NOT NULL,
+    ward VARCHAR(100) NOT NULL,
+    address_line VARCHAR(255) NOT NULL
+);
+
+
+-- =========================================================
+-- 21. ORDER STATUS HISTORY
+-- =========================================================
+
+CREATE TABLE order_status_history (
+    id UUID PRIMARY KEY,
+
+    order_id UUID NOT NULL
+        REFERENCES orders(id),
+
+    old_status VARCHAR(30),
+
+    new_status VARCHAR(30) NOT NULL,
+
+    changed_by UUID
+        REFERENCES users(id),
+
+    note TEXT,
+
+    created_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (
+        old_status IS NULL
+        OR old_status IN (
+            'PENDING',
+            'CONFIRMED',
+            'PROCESSING',
+            'SHIPPING',
+            'COMPLETED',
+            'CANCELLED'
+        )
+    ),
+
+    CHECK (
+        new_status IN (
+            'PENDING',
+            'CONFIRMED',
+            'PROCESSING',
+            'SHIPPING',
+            'COMPLETED',
+            'CANCELLED'
+        )
+    )
+);
+
+
+-- =========================================================
+-- 22. COUPON USAGES
+-- =========================================================
+
+CREATE TABLE coupon_usages (
+    id UUID PRIMARY KEY,
+
+    coupon_id UUID NOT NULL
+        REFERENCES coupons(id),
+
+    user_id UUID NOT NULL
+        REFERENCES users(id),
+
+    order_id UUID NOT NULL UNIQUE
+        REFERENCES orders(id),
+
+    discount_amount NUMERIC(15, 0) NOT NULL,
+
+    used_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (discount_amount >= 0)
+);
+
+
+-- =========================================================
+-- 23. PAYMENTS
+-- =========================================================
+
+CREATE TABLE payments (
+    id UUID PRIMARY KEY,
+
+    order_id UUID NOT NULL
+        REFERENCES orders(id),
+
+    provider VARCHAR(50),
+
+    method VARCHAR(50) NOT NULL,
+
+    amount NUMERIC(15, 0) NOT NULL,
+
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+
+    transaction_id VARCHAR(255),
+
+    paid_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (
+        method IN (
+            'COD',
+            'VNPAY',
+            'MOMO',
+            'BANK_TRANSFER'
+        )
+    ),
+
+    CHECK (
+        status IN (
+            'PENDING',
+            'SUCCESS',
+            'FAILED',
+            'REFUNDED'
+        )
+    ),
+
+    CHECK (amount >= 0)
+);
+
+
+-- =========================================================
+-- 24. REFUNDS
+-- =========================================================
+
+CREATE TABLE refunds (
+    id UUID PRIMARY KEY,
+
+    payment_id UUID NOT NULL
+        REFERENCES payments(id),
+
+    order_id UUID NOT NULL
+        REFERENCES orders(id),
+
+    amount NUMERIC(15, 0) NOT NULL,
+
+    reason TEXT,
+
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+
+    transaction_id VARCHAR(255),
+
+    refunded_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (
+        status IN (
+            'PENDING',
+            'SUCCESS',
+            'FAILED'
+        )
+    ),
+
+    CHECK (amount > 0)
+);
+
+
+-- =========================================================
+-- 25. SHIPMENTS
+-- =========================================================
+
+CREATE TABLE shipments (
+    id UUID PRIMARY KEY,
+
+    order_id UUID NOT NULL UNIQUE
+        REFERENCES orders(id),
+
+    carrier VARCHAR(100),
+
+    tracking_number VARCHAR(255),
+
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+
+    shipped_at TIMESTAMPTZ,
+
+    delivered_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (
+        status IN (
+            'PENDING',
+            'SHIPPED',
+            'DELIVERED',
+            'CANCELLED'
+        )
+    )
+);
+
+
+-- =========================================================
+-- 26. REVIEWS
+-- =========================================================
+
+CREATE TABLE reviews (
+    id UUID PRIMARY KEY,
+
+    user_id UUID NOT NULL
+        REFERENCES users(id),
+
+    product_id UUID NOT NULL
+        REFERENCES products(id),
+
+    order_item_id UUID
+        REFERENCES order_items(id),
+
+    rating INT NOT NULL,
+
+    title VARCHAR(255),
+
+    comment TEXT,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED',
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (rating BETWEEN 1 AND 5),
+
+    CHECK (
+        status IN (
+            'PUBLISHED',
+            'HIDDEN'
+        )
+    )
+);
+
+
+-- =========================================================
+-- 27. USER EVENTS
+-- =========================================================
+
+CREATE TABLE user_events (
+    id UUID PRIMARY KEY,
+
+    user_id UUID
+        REFERENCES users(id),
+
+    anonymous_id VARCHAR(255),
+
+    session_id VARCHAR(255),
+
+    product_id UUID
+        REFERENCES products(id),
+
+    variant_id UUID
+        REFERENCES product_variants(id),
+
+    event_type VARCHAR(50) NOT NULL,
+
+    source VARCHAR(50),
+
+    metadata JSONB,
+
+    created_at TIMESTAMPTZ NOT NULL,
+
+    CHECK (
+        event_type IN (
+            'VIEW',
+            'CLICK',
+            'ADD_TO_CART',
+            'REMOVE_FROM_CART',
+            'ADD_TO_WISHLIST',
+            'PURCHASE'
+        )
+    ),
+
+    CHECK (
+        user_id IS NOT NULL
+        OR anonymous_id IS NOT NULL
+        OR session_id IS NOT NULL
+    )
+);
+
+
+-- =========================================================
+-- 28. PRODUCT RELATIONS
+-- =========================================================
+
+CREATE TABLE product_relations (
+    product_id UUID NOT NULL
+        REFERENCES products(id),
+
+    related_product_id UUID NOT NULL
+        REFERENCES products(id),
+
+    relation_type VARCHAR(50) NOT NULL,
+
+    score NUMERIC(8, 6),
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    PRIMARY KEY (
+        product_id,
+        related_product_id,
+        relation_type
+    ),
+
+    CHECK (
+        relation_type IN (
+            'SIMILAR',
+            'COMPATIBLE',
+            'ACCESSORY',
+            'ALTERNATIVE',
+            'FREQUENTLY_BOUGHT_TOGETHER'
+        )
+    ),
+
+    CHECK (
+        product_id <> related_product_id
+    ),
+
+    CHECK (
+        score IS NULL
+        OR (score >= 0 AND score <= 1)
+    )
+);
+
+
+-- =========================================================
+-- 29. CUSTOMER LOYALTY
+-- =========================================================
+
+CREATE TABLE customer_loyalty (
+    id UUID PRIMARY KEY,
+
+    user_id UUID NOT NULL
+        REFERENCES users(id),
+
+    year INT NOT NULL,
+
+    qualifying_spend NUMERIC(15, 0)
+        NOT NULL DEFAULT 0,
+
+    membership_tier VARCHAR(20)
+        NOT NULL DEFAULT 'STANDARD',
+
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+
+    UNIQUE (user_id, year),
+
+    CHECK (qualifying_spend >= 0),
+
+    CHECK (year >= 2000)
+);
+
+
+-- =========================================================
+-- PARTIAL UNIQUE INDEXES
+-- =========================================================
+
+
+-- Một user chỉ có một địa chỉ mặc định
+CREATE UNIQUE INDEX uq_user_addresses_default
+ON user_addresses(user_id)
+WHERE is_default = TRUE;
+
+
+-- Một product chỉ có một ảnh primary ở product-level
+CREATE UNIQUE INDEX uq_product_images_product_primary
+ON product_images(product_id)
+WHERE variant_id IS NULL
+  AND is_primary = TRUE;
+
+
+-- Một variant chỉ có một ảnh primary
+CREATE UNIQUE INDEX uq_product_images_variant_primary
+ON product_images(variant_id)
+WHERE variant_id IS NOT NULL
+  AND is_primary = TRUE;
+
+
+-- Transaction payment không được trùng
+CREATE UNIQUE INDEX uq_payments_provider_transaction
+ON payments(provider, transaction_id)
+WHERE transaction_id IS NOT NULL;
+
+
+-- Một order item chỉ được review một lần
+CREATE UNIQUE INDEX uq_reviews_order_item
+ON reviews(order_item_id)
+WHERE order_item_id IS NOT NULL;
+
+
+-- =========================================================
+-- FOREIGN KEY / HOT QUERY INDEXES
+-- =========================================================
+
+
+-- AUTH
+CREATE INDEX idx_users_role_id
+ON users(role_id);
+
+CREATE INDEX idx_role_permissions_permission_id
+ON role_permissions(permission_id);
+
+CREATE INDEX idx_user_permissions_permission_id
+ON user_permissions(permission_id);
+
+
+-- ADDRESS
+CREATE INDEX idx_user_addresses_user_id
+ON user_addresses(user_id);
+
+
+-- CATALOG
+CREATE INDEX idx_categories_parent_id
+ON categories(parent_id);
+
+CREATE INDEX idx_products_category_id
+ON products(category_id);
+
+CREATE INDEX idx_products_brand_id
+ON products(brand_id);
+
+CREATE INDEX idx_product_variants_product_id
+ON product_variants(product_id);
+
+CREATE INDEX idx_product_images_product_id
+ON product_images(product_id);
+
+CREATE INDEX idx_product_images_variant_id
+ON product_images(variant_id);
+
+
+-- INVENTORY
+CREATE INDEX idx_stock_movements_variant_id
+ON stock_movements(variant_id);
+
+
+-- CART
+CREATE INDEX idx_cart_items_variant_id
+ON cart_items(variant_id);
+
+
+-- ORDERS
+CREATE INDEX idx_orders_user_status_created
+ON orders(user_id, status, created_at DESC);
+
+CREATE INDEX idx_orders_coupon_id
+ON orders(coupon_id);
+
+CREATE INDEX idx_order_items_order_id
+ON order_items(order_id);
+
+CREATE INDEX idx_order_items_variant_id
+ON order_items(variant_id);
+
+CREATE INDEX idx_order_status_history_order_created
+ON order_status_history(order_id, created_at DESC);
+
+CREATE INDEX idx_coupon_usages_coupon_id
+ON coupon_usages(coupon_id);
+
+CREATE INDEX idx_coupon_usages_user_id
+ON coupon_usages(user_id);
+
+
+-- PAYMENT
+CREATE INDEX idx_payments_order_id
+ON payments(order_id);
+
+CREATE INDEX idx_refunds_payment_id
+ON refunds(payment_id);
+
+CREATE INDEX idx_refunds_order_id
+ON refunds(order_id);
+
+
+-- REVIEW
+CREATE INDEX idx_reviews_user_id
+ON reviews(user_id);
+
+CREATE INDEX idx_reviews_product_id
+ON reviews(product_id);
+
+
+-- RECOMMENDATION
+CREATE INDEX idx_user_events_user_created
+ON user_events(user_id, created_at DESC);
+
+CREATE INDEX idx_user_events_product_created
+ON user_events(product_id, created_at DESC);
+
+CREATE INDEX idx_user_events_variant_created
+ON user_events(variant_id, created_at DESC);
+
+CREATE INDEX idx_user_events_session_created
+ON user_events(session_id, created_at DESC);
+
+CREATE INDEX idx_user_events_anonymous_created
+ON user_events(anonymous_id, created_at DESC);
+
+CREATE INDEX idx_product_relations_related_product
+ON product_relations(related_product_id);
+
+
+-- LOYALTY
+CREATE INDEX idx_customer_loyalty_user_id
+ON customer_loyalty(user_id);
