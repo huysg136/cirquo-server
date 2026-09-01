@@ -1,10 +1,10 @@
-package com.huysg136.cirquo_server.user.impl;
+package com.huysg136.cirquo_server.user.service.impl;
 
-import com.huysg136.cirquo_server.user.User;
-import com.huysg136.cirquo_server.user.UserMapper;
-import com.huysg136.cirquo_server.user.UserRepository;
-import com.huysg136.cirquo_server.user.UserService;
-import com.huysg136.cirquo_server.user.UserStatus;
+import com.huysg136.cirquo_server.user.entity.User;
+import com.huysg136.cirquo_server.user.mapper.UserMapper;
+import com.huysg136.cirquo_server.user.repository.UserRepository;
+import com.huysg136.cirquo_server.user.service.UserService;
+import com.huysg136.cirquo_server.user.enums.UserStatus;
 import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;

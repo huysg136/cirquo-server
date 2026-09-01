@@ -1,8 +1,9 @@
-package com.huysg136.cirquo_server.user;
+package com.huysg136.cirquo_server.user.mapper;
 
 import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;
+import com.huysg136.cirquo_server.user.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;

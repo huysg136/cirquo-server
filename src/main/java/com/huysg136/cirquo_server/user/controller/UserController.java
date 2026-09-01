@@ -1,7 +1,8 @@
-package com.huysg136.cirquo_server.user;
+package com.huysg136.cirquo_server.user.controller;
 
 import com.huysg136.cirquo_server.common.ApiResponse;
 import com.huysg136.cirquo_server.common.BaseController;
+import com.huysg136.cirquo_server.user.service.UserService;
 import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import com.huysg136.cirquo_server.user.dto.response.ListUserResponse;

@@ -1,6 +1,6 @@
 package com.huysg136.cirquo_server.user.dto.response;
 
-import com.huysg136.cirquo_server.user.UserStatus;
+import com.huysg136.cirquo_server.user.enums.UserStatus;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;

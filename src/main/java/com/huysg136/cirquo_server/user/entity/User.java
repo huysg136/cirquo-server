@@ -1,5 +1,6 @@
-package com.huysg136.cirquo_server.user;
+package com.huysg136.cirquo_server.user.entity;
 
+import com.huysg136.cirquo_server.user.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

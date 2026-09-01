@@ -1,4 +1,4 @@
-package com.huysg136.cirquo_server.user;
+package com.huysg136.cirquo_server.user.service;
 
 import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
