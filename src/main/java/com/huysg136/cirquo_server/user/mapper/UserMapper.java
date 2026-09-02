@@ -1,6 +1,6 @@
 package com.huysg136.cirquo_server.user.mapper;
 
-import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
+import com.huysg136.cirquo_server.auth.dto.request.RegisterRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import com.huysg136.cirquo_server.user.dto.response.UserResponse;
 import com.huysg136.cirquo_server.user.entity.User;
@@ -20,7 +20,7 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "role", ignore = true)
-    User toEntity(CreateUserRequest request);
+    User toEntity(RegisterRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)

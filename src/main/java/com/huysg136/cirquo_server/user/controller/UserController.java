@@ -3,7 +3,7 @@ package com.huysg136.cirquo_server.user.controller;
 import com.huysg136.cirquo_server.common.ApiResponse;
 import com.huysg136.cirquo_server.common.BaseController;
 import com.huysg136.cirquo_server.user.service.UserService;
-import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
+import com.huysg136.cirquo_server.user.dto.request.ChangeUserStatusRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import com.huysg136.cirquo_server.user.dto.response.UserResponse;
 import jakarta.validation.Valid;
@@ -21,26 +21,23 @@ import java.util.UUID;
 public class UserController extends BaseController {
     private final UserService userService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<UserResponse>> createUser(
-            @Valid @RequestBody CreateUserRequest request
-    ) {
-
-        UserResponse userResponse = userService.create(request);
-
-        return success(
-                HttpStatus.CREATED,
-                "User created successfully!",
-                userResponse
-        );
-    }
-
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
         return success(
                 HttpStatus.OK,
                 "Users retrieved successfully!",
-                userService.read()
+                userService.getAllUsers()
+        );
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(
+            @PathVariable UUID userId
+    ) {
+        return success(
+                HttpStatus.OK,
+                "User retrieved successfully!",
+                userService.getUserById(userId)
         );
     }
 
@@ -50,7 +47,7 @@ public class UserController extends BaseController {
             @Valid @RequestBody UpdateUserRequest request
     ) {
 
-        UserResponse userResponse = userService.update(userId, request);
+        UserResponse userResponse = userService.updateUser(userId, request);
 
         return success(
                 HttpStatus.OK,
@@ -59,15 +56,16 @@ public class UserController extends BaseController {
         );
     }
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(
-            @PathVariable UUID userId
+    @PatchMapping("/{userId}/status")
+    public ResponseEntity<ApiResponse<Void>> changeStatus(
+            @PathVariable UUID userId,
+            @Valid @RequestBody ChangeUserStatusRequest request
     ) {
-        userService.delete(userId);
+        userService.changeStatus(userId, request.status());
 
         return success(
                 HttpStatus.OK,
-                "User deleted successfully!",
+                "User status changed successfully!",
                 null
         );
     }

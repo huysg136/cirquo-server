@@ -1,18 +1,18 @@
 package com.huysg136.cirquo_server.user.service;
 
-import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import com.huysg136.cirquo_server.user.dto.response.UserResponse;
+import com.huysg136.cirquo_server.user.enums.UserStatus;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
-    UserResponse create(CreateUserRequest createUserRequest);
+    List<UserResponse> getAllUsers();
 
-    List<UserResponse> read();
+    UserResponse getUserById(UUID userId);
 
-    UserResponse update(UUID userId, UpdateUserRequest updateUserRequest);
+    UserResponse updateUser(UUID userId, UpdateUserRequest request);
 
-    void delete(UUID userId);
+    void changeStatus(UUID userId, UserStatus status);
 }

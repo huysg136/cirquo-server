@@ -1,20 +1,15 @@
 package com.huysg136.cirquo_server.user.service.impl;
 
 import com.huysg136.cirquo_server.user.dto.response.UserResponse;
-import com.huysg136.cirquo_server.user.entity.Role;
 import com.huysg136.cirquo_server.user.entity.User;
-import com.huysg136.cirquo_server.user.enums.RoleName;
+import com.huysg136.cirquo_server.user.enums.UserStatus;
 import com.huysg136.cirquo_server.user.exception.EmailAlreadyExistsException;
 import com.huysg136.cirquo_server.user.exception.UserNotFoundException;
 import com.huysg136.cirquo_server.user.mapper.UserMapper;
-import com.huysg136.cirquo_server.user.repository.RoleRepository;
 import com.huysg136.cirquo_server.user.repository.UserRepository;
 import com.huysg136.cirquo_server.user.service.UserService;
-import com.huysg136.cirquo_server.user.enums.UserStatus;
-import com.huysg136.cirquo_server.user.dto.request.CreateUserRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,59 +21,46 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
-    public UserResponse create(CreateUserRequest createUserRequest) {
-        if (userRepository.existsByEmail(createUserRequest.email())) {
-            throw new EmailAlreadyExistsException();
-        }
-
-        Role customerRole = roleRepository.findByName(RoleName.CUSTOMER)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Default CUSTOMER role is not configured"
-                ));
-
-        User user = userMapper.toEntity(createUserRequest);
-        user.setPasswordHash(passwordEncoder.encode(createUserRequest.password()));
-        user.setStatus(UserStatus.ACTIVE);
-        user.setRole(customerRole);
-
-        User savedUser = userRepository.save(user);
-        return userMapper.toResponse(savedUser);
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream().map(userMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     @Override
-    public List<UserResponse> read() {
-        return userRepository.findAll().stream().map(userMapper::toResponse).toList();
+    public UserResponse getUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        return userMapper.toResponse(user);
     }
 
     @Transactional
     @Override
-    public UserResponse update(UUID userId, UpdateUserRequest updateUserRequest) {
+    public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        if (!user.getEmail().equals(updateUserRequest.email())
-                && userRepository.existsByEmail(updateUserRequest.email())) {
+        if (!user.getEmail().equals(request.email())
+                && userRepository.existsByEmail(request.email())) {
             throw new EmailAlreadyExistsException();
         }
 
-        userMapper.updateEntity(updateUserRequest, user);
+        userMapper.updateEntity(request, user);
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
     }
 
     @Transactional
     @Override
-    public void delete(UUID userId) {
+    public void changeStatus(UUID userId, UserStatus status) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        userRepository.delete(user);
+        user.setStatus(status);
+        userRepository.save(user);
     }
 }
