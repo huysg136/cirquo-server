@@ -45,17 +45,17 @@ CREATE TABLE users (
 
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    full_name VARCHAR(100) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
 
     status VARCHAR(20) NOT NULL,
     role_id UUID NOT NULL,
 
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
 
     CONSTRAINT chk_user_status
-        CHECK (status IN ('ACTIVE', 'BLOCKED')),
+        CHECK (status IN ('ACTIVE', 'INACTIVE', 'SUSPENDED')),
 
     CONSTRAINT fk_users_role
         FOREIGN KEY (role_id) REFERENCES roles(id)
@@ -81,8 +81,8 @@ CREATE TABLE user_addresses (
 
     is_default BOOLEAN NOT NULL DEFAULT FALSE,
 
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
 
     CONSTRAINT fk_user_addresses_user
         FOREIGN KEY (user_id) REFERENCES users(id)
