@@ -5,6 +5,8 @@ import com.huysg136.cirquo_server.auth.service.AuthService;
 import com.huysg136.cirquo_server.common.ApiResponse;
 import com.huysg136.cirquo_server.common.BaseController;
 import com.huysg136.cirquo_server.user.dto.response.UserResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,12 +16,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(
+        name = "Authentication",
+        description = "Register, login, and token management"
+)
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController extends BaseController {
     private final AuthService authService;
 
+    @Operation(
+            summary = "Register a new customer account",
+            description = "Creates a customer account with the default CUSTOMER role."
+    )
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserResponse>> register(
             @Valid @RequestBody RegisterRequest request

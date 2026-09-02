@@ -5,6 +5,8 @@ import com.huysg136.cirquo_server.common.BaseController;
 import com.huysg136.cirquo_server.user.dto.request.UserAddressRequest;
 import com.huysg136.cirquo_server.user.dto.response.UserAddressResponse;
 import com.huysg136.cirquo_server.user.service.UserAddressService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,12 +16,20 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(
+        name = "User Addresses",
+        description = "Manage delivery addresses for a user"
+)
 @RestController
 @RequestMapping("/api/v1/users/{userId}/addresses")
 @RequiredArgsConstructor
 public class UserAddressController extends BaseController {
     private final UserAddressService userAddressService;
 
+    @Operation(
+            summary = "Create a user address",
+            description = "Creates a delivery address for the specified user. A default address replaces the user's current default address."
+    )
     @PostMapping
     public ResponseEntity<ApiResponse<UserAddressResponse>> createAddress (
             @PathVariable UUID userId,
@@ -34,6 +44,10 @@ public class UserAddressController extends BaseController {
         );
     }
 
+    @Operation(
+            summary = "Get user addresses",
+            description = "Returns all delivery addresses of the specified user, with the default address first."
+    )
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserAddressResponse>>> getAllByUserId (
             @PathVariable UUID userId
@@ -45,6 +59,10 @@ public class UserAddressController extends BaseController {
         );
     }
 
+    @Operation(
+            summary = "Update a user address",
+            description = "Updates a delivery address owned by the specified user. Setting defaultAddress to true makes it the default address."
+    )
     @PutMapping("/{addressId}")
     public ResponseEntity<ApiResponse<UserAddressResponse>> updateAddress (
             @PathVariable UUID userId,
@@ -60,6 +78,10 @@ public class UserAddressController extends BaseController {
         );
     }
 
+    @Operation(
+            summary = "Delete a user address",
+            description = "Permanently removes a delivery address owned by the specified user."
+    )
     @DeleteMapping("/{addressId}")
     public ResponseEntity<ApiResponse<Void>> deleteAddress(
             @PathVariable UUID userId,
