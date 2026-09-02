@@ -30,7 +30,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Override
     public List<UserResponse> getAllUsers() {
-        return userRepository.findAll().stream().map(userMapper::toResponse).toList();
+        return userRepository.findAllWithRole().stream().map(userMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
