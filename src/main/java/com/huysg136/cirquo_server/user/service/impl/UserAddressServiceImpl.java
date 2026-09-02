@@ -26,13 +26,13 @@ public class UserAddressServiceImpl implements UserAddressService {
 
     @Transactional
     @Override
-    public UserAddressResponse createAddress(UUID userId, UserAddressRequest userAddressRequest) {
+    public UserAddressResponse createAddress(UUID userId, UserAddressRequest request) {
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
-        if (userAddressRequest.defaultAddress()){
+        if (request.defaultAddress()){
             userAddressRepository.clearDefaultByUserId(userId);
         }
-        UserAddress userAddress = userAddressMapper.toEntity(userAddressRequest);
+        UserAddress userAddress = userAddressMapper.toEntity(request);
         userAddress.setUser(user);
 
         UserAddress savedAddress = userAddressRepository.save(userAddress);
@@ -55,15 +55,15 @@ public class UserAddressServiceImpl implements UserAddressService {
 
     @Transactional
     @Override
-    public UserAddressResponse updateAddress(UUID userId, UUID addressId, UserAddressRequest userAddressRequest) {
+    public UserAddressResponse updateAddress(UUID userId, UUID addressId, UserAddressRequest request) {
         UserAddress userAddress = userAddressRepository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(UserAddressNotFoundException::new);
 
-        if (userAddressRequest.defaultAddress()){
+        if (request.defaultAddress()){
             userAddressRepository.clearDefaultExcept(userId, addressId);
         }
 
-        userAddressMapper.updateEntity(userAddressRequest, userAddress);
+        userAddressMapper.updateEntity(request, userAddress);
 
         UserAddress savedAddress = userAddressRepository.save(userAddress);
         return userAddressMapper.toResponse(savedAddress);

@@ -2,11 +2,13 @@ package com.huysg136.cirquo_server.user.controller;
 
 import com.huysg136.cirquo_server.common.ApiResponse;
 import com.huysg136.cirquo_server.common.BaseController;
+import com.huysg136.cirquo_server.user.dto.request.ChangeUserRoleRequest;
 import com.huysg136.cirquo_server.user.service.UserService;
 import com.huysg136.cirquo_server.user.dto.request.ChangeUserStatusRequest;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import com.huysg136.cirquo_server.user.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.UUID;
         name = "Users",
         description = "Manage user profiles and account statuses"
 )
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping(value = "/api/v1/users")
 @RequiredArgsConstructor
@@ -65,12 +68,10 @@ public class UserController extends BaseController {
             @Valid @RequestBody UpdateUserRequest request
     ) {
 
-        UserResponse userResponse = userService.updateUser(userId, request);
-
         return success(
                 HttpStatus.OK,
                 "User updated successfully!",
-                userResponse
+                userService.updateUser(userId, request)
         );
     }
 
@@ -89,6 +90,22 @@ public class UserController extends BaseController {
                 HttpStatus.OK,
                 "User status changed successfully!",
                 null
+        );
+    }
+
+    @Operation(
+            summary = "Change user role",
+            description = "Changes the role of the specified user."
+    )
+    @PatchMapping("/{userId}/role")
+    public ResponseEntity<ApiResponse<UserResponse>> changeRole(
+            @PathVariable UUID userId,
+            @Valid @RequestBody ChangeUserRoleRequest request
+    ) {
+        return success(
+                HttpStatus.OK,
+                "User role changed successfully!",
+                userService.changeRole(userId, request.roleName())
         );
     }
 }

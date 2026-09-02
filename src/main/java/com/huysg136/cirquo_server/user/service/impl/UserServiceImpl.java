@@ -1,11 +1,14 @@
 package com.huysg136.cirquo_server.user.service.impl;
 
 import com.huysg136.cirquo_server.user.dto.response.UserResponse;
+import com.huysg136.cirquo_server.user.entity.Role;
 import com.huysg136.cirquo_server.user.entity.User;
+import com.huysg136.cirquo_server.user.enums.RoleName;
 import com.huysg136.cirquo_server.user.enums.UserStatus;
 import com.huysg136.cirquo_server.user.exception.EmailAlreadyExistsException;
 import com.huysg136.cirquo_server.user.exception.UserNotFoundException;
 import com.huysg136.cirquo_server.user.mapper.UserMapper;
+import com.huysg136.cirquo_server.user.repository.RoleRepository;
 import com.huysg136.cirquo_server.user.repository.UserRepository;
 import com.huysg136.cirquo_server.user.service.UserService;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
@@ -21,6 +24,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
@@ -62,5 +66,23 @@ public class UserServiceImpl implements UserService {
 
         user.setStatus(status);
         userRepository.save(user);
+    }
+
+    @Transactional
+    @Override
+    public UserResponse changeRole(UUID userId, RoleName roleName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Role is not configured"
+                ));
+
+        user.setRole(role);
+
+        User savedUser = userRepository.save(user);
+
+        return userMapper.toResponse(savedUser);
     }
 }

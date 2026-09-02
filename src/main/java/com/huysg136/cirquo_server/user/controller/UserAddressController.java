@@ -6,6 +6,7 @@ import com.huysg136.cirquo_server.user.dto.request.UserAddressRequest;
 import com.huysg136.cirquo_server.user.dto.response.UserAddressResponse;
 import com.huysg136.cirquo_server.user.service.UserAddressService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.UUID;
         name = "User Addresses",
         description = "Manage delivery addresses for a user"
 )
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/users/{userId}/addresses")
 @RequiredArgsConstructor
@@ -35,12 +37,11 @@ public class UserAddressController extends BaseController {
             @PathVariable UUID userId,
             @Valid @RequestBody UserAddressRequest userAddressRequest
     ) {
-        UserAddressResponse userAddressResponse = userAddressService.createAddress(userId, userAddressRequest);
 
         return success(
                 HttpStatus.CREATED,
                 "User address created successfully!",
-                userAddressResponse
+                userAddressService.createAddress(userId, userAddressRequest)
         );
     }
 
@@ -69,12 +70,11 @@ public class UserAddressController extends BaseController {
             @PathVariable UUID addressId,
             @Valid @RequestBody UserAddressRequest userAddressRequest
     ){
-        UserAddressResponse userAddressResponse = userAddressService.updateAddress(userId, addressId, userAddressRequest);
 
         return  success(
                 HttpStatus.OK,
                 "User address updated successfully!",
-                userAddressResponse
+                userAddressService.updateAddress(userId, addressId, userAddressRequest)
         );
     }
 

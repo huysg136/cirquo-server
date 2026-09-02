@@ -38,6 +38,42 @@ public enum ErrorCode {
             "Address not found!"
     ),
 
+    INVALID_CREDENTIALS(
+            1006,
+            HttpStatus.UNAUTHORIZED,
+            "Email or password is incorrect!"
+    ),
+
+    USER_NOT_ACTIVE(
+            1007,
+            HttpStatus.FORBIDDEN,
+            "User account is not active!"
+    ),
+
+    INVALID_REFRESH_TOKEN(
+            1008,
+            HttpStatus.UNAUTHORIZED,
+            "Refresh token is invalid or expired!"
+    ),
+
+    NEW_PASSWORD_SAME_AS_CURRENT(
+            1009,
+            HttpStatus.BAD_REQUEST,
+            "New password must be different from current password!"
+    ),
+
+    PASSWORD_CONFIRMATION_MISMATCH(
+            1010,
+            HttpStatus.BAD_REQUEST,
+            "New password and confirmation password do not match!"
+    ),
+
+    CURRENT_PASSWORD_INCORRECT(
+            1011,
+            HttpStatus.BAD_REQUEST,
+            "Current password is incorrect!"
+    ),
+
     UNCATEGORIZED_ERROR(
             9999,
             HttpStatus.INTERNAL_SERVER_ERROR,
