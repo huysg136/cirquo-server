@@ -6,7 +6,7 @@ import com.huysg136.cirquo_server.exception.ErrorCode;
 public class UserAddressNotFoundException extends AppException {
 
     public UserAddressNotFoundException() {
-        super(ErrorCode.ADDRESS_NOT_FOUND);
+        super(ErrorCode.USER_ADDRESS_NOT_FOUND);
     }
 
 }

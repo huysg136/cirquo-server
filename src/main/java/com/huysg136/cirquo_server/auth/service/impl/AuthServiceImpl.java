@@ -65,8 +65,12 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException();
         }
 
-        if (user.getStatus() != UserStatus.ACTIVE){
+        if (user.getStatus() == UserStatus.INACTIVE){
             throw new UserNotActiveException();
+        }
+
+        if (user.getStatus() == UserStatus.SUSPENDED){
+            throw new UserSuspenedException();
         }
 
         String accessToken = jwtService.generateAccessToken(user);
