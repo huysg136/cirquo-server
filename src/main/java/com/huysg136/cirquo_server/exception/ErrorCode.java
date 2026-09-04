@@ -58,6 +58,12 @@ public enum ErrorCode {
             "Current password is incorrect!"
     ),
 
+    UNAUTHENTICATED(
+            1106,
+            HttpStatus.UNAUTHORIZED,
+            "Authentication is required!"
+    ),
+
     // User: 1200 - 1299
     EMAIL_ALREADY_EXISTS(
             1201,
