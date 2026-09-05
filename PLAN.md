@@ -153,7 +153,6 @@ Schema ownership:
 
 ```text
 categories
-brands
 products
 product_variants
 product_images
@@ -167,7 +166,6 @@ catalog/
 │   └── response/
 ├── entity/
 │   ├── Category.java
-│   ├── Brand.java
 │   ├── Product.java
 │   ├── ProductVariant.java
 │   └── ProductImage.java
@@ -179,32 +177,24 @@ catalog/
     └── impl/
 ```
 
-## 6. Inventory feature
+Quyết định MVP:
 
-Schema ownership:
+- Cirquo chỉ bán sản phẩm Apple, nên không có `brands` và `Product` không có `brand_id`.
+- Tồn kho thuộc trực tiếp `ProductVariant` qua `stock_quantity`; không tạo `inventories` hoặc `stock_movements`.
+- Giá cũng thuộc `ProductVariant`, không thuộc `Product`.
+- Số lượng khả dụng chính là `stock_quantity`. Khi đơn được xác nhận/thanh toán, Order giảm trực tiếp giá trị này trong transaction.
+
+Thứ tự triển khai Catalog:
 
 ```text
-inventories
-stock_movements
+1. Category CRUD và seed nhóm sản phẩm.
+2. Product CRUD: category, tên, slug, mô tả, specs, trạng thái.
+3. ProductVariant CRUD: SKU, giá, thuộc tính, stockQuantity, trạng thái.
+4. ProductImage CRUD: ảnh chung/ảnh variant, ảnh chính, thứ tự hiển thị.
+5. Public API: danh sách phân trang, lọc category, tìm kiếm, chi tiết theo slug.
 ```
 
-```text
-inventory/
-├── controller/
-├── dto/
-├── entity/
-│   ├── Inventory.java
-│   └── StockMovement.java
-├── enums/
-│   └── StockMovementType.java
-├── repository/
-└── service/
-    └── impl/
-```
-
-Inventory phải cung cấp các operation transaction-safe: check, reserve, release và deduct stock.
-
-## 7. Shopping feature
+## 6. Shopping feature
 
 Schema ownership:
 
@@ -230,7 +220,7 @@ shopping/
     └── impl/
 ```
 
-## 8. Promotion feature
+## 7. Promotion feature
 
 Schema ownership:
 
@@ -254,7 +244,7 @@ promotion/
     └── impl/
 ```
 
-## 9. Order feature
+## 8. Order feature
 
 Sở hữu checkout orchestration và snapshot của đơn hàng.
 
@@ -290,14 +280,16 @@ Checkout flow:
 
 ```text
 Cart
-→ Inventory check/reservation
+→ Kiểm tra stock_quantity của từng variant
 → Coupon validation
 → Order + Item + Address snapshots
 → Payment creation
 → Shipment creation
 ```
 
-## 10. Payment feature
+Khi Order được xác nhận/thanh toán, giảm `product_variants.stock_quantity` trong cùng transaction. Không có bước reserve/release ở MVP.
+
+## 9. Payment feature
 
 Schema ownership:
 
@@ -325,7 +317,7 @@ payment/
     └── MomoClient.java
 ```
 
-## 11. Shipping feature
+## 10. Shipping feature
 
 Schema ownership: `shipments`.
 
@@ -342,7 +334,7 @@ shipping/
 └── client/
 ```
 
-## 12. Review feature
+## 11. Review feature
 
 Schema ownership: `reviews`.
 
@@ -358,7 +350,7 @@ review/
 └── service/
 ```
 
-## 13. Loyalty feature
+## 12. Loyalty feature
 
 Schema ownership: `customer_loyalty`.
 
@@ -374,7 +366,7 @@ loyalty/
 └── service/
 ```
 
-## 14. Recommendation feature
+## 13. Recommendation feature
 
 Schema ownership:
 
@@ -417,7 +409,7 @@ API/user actions
 
 Không để controller gọi C++ engine trực tiếp và không để C++ engine query toàn bộ `user_events` cho mỗi request.
 
-## 15. Thứ tự triển khai
+## 14. Thứ tự triển khai
 
 ```text
 1. Shared response + exception foundation
@@ -425,25 +417,23 @@ Không để controller gọi C++ engine trực tiếp và không để C++ engi
 3. Auth
 4. User Address
 5. Catalog
-6. Inventory
-7. Shopping
-8. Promotion
-9. Order
-10. Payment
-11. Shipping
-12. Review
-13. Loyalty
-14. Recommendation event tracking
-15. ML/C++ recommendation integration
+6. Shopping
+7. Promotion
+8. Order
+9. Payment
+10. Shipping
+11. Review
+12. Loyalty
+13. Recommendation event tracking
+14. ML/C++ recommendation integration
 ```
 
-## 16. Bước tiếp theo hiện tại
+## 15. Bước tiếp theo hiện tại
 
-Không tạo toàn bộ folder trên ngay bây giờ. Tiếp tục hoàn thiện User core, sau đó:
+Không tạo toàn bộ folder trên ngay bây giờ. User, Auth và User Address đã xong, nên bắt đầu Catalog theo phạm vi MVP:
 
-1. Đồng bộ entity `User` với bảng `users`.
-2. Hoàn thiện error code và response thống nhất.
-3. Thêm duplicate-email handling.
-4. Tạo Role/Permission mapping và seed data.
-5. Chuyển register/login sang Auth feature.
-6. Bắt đầu User Address.
+1. Tạo Flyway migration cho `categories`, `products`, `product_variants`, `product_images` và index liên quan.
+2. Tạo Category trước, seed các nhóm: iPhone, Mac, iPad, Watch, Tai nghe/loa, Phụ kiện.
+3. Tạo Product CRUD cho ADMIN/STAFF và public API đọc Product đang ACTIVE.
+4. Thêm ProductVariant với `stockQuantity`; không tạo feature Inventory.
+5. Thêm ProductImage sau khi Variant ổn định.

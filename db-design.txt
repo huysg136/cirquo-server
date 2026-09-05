@@ -128,28 +128,7 @@ CREATE TABLE categories (
 
 
 -- =========================================================
--- 8. BRANDS
--- =========================================================
-
-CREATE TABLE brands (
-    id UUID PRIMARY KEY,
-
-    name VARCHAR(100) NOT NULL UNIQUE,
-    slug VARCHAR(150) NOT NULL UNIQUE,
-
-    logo_url TEXT,
-
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL,
-
-    CHECK (status IN ('ACTIVE', 'INACTIVE'))
-);
-
-
--- =========================================================
--- 9. PRODUCTS
+-- 8. PRODUCTS
 -- =========================================================
 
 CREATE TABLE products (
@@ -157,9 +136,6 @@ CREATE TABLE products (
 
     category_id UUID NOT NULL
         REFERENCES categories(id),
-
-    brand_id UUID
-        REFERENCES brands(id),
 
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(300) NOT NULL UNIQUE,
@@ -179,7 +155,7 @@ CREATE TABLE products (
 
 
 -- =========================================================
--- 10. PRODUCT VARIANTS
+-- 9. PRODUCT VARIANTS
 -- =========================================================
 
 CREATE TABLE product_variants (
@@ -197,6 +173,8 @@ CREATE TABLE product_variants (
 
     attributes JSONB,
 
+    stock_quantity INT NOT NULL DEFAULT 0,
+
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
 
     created_at TIMESTAMPTZ NOT NULL,
@@ -209,12 +187,14 @@ CREATE TABLE product_variants (
         OR compare_at_price >= 0
     ),
 
+    CHECK (stock_quantity >= 0),
+
     CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );
 
 
 -- =========================================================
--- 11. PRODUCT IMAGES
+-- 10. PRODUCT IMAGES
 -- =========================================================
 
 CREATE TABLE product_images (
@@ -238,63 +218,7 @@ CREATE TABLE product_images (
 
 
 -- =========================================================
--- 12. INVENTORIES
--- =========================================================
-
-CREATE TABLE inventories (
-    variant_id UUID PRIMARY KEY
-        REFERENCES product_variants(id),
-
-    quantity INT NOT NULL DEFAULT 0,
-
-    reserved_quantity INT NOT NULL DEFAULT 0,
-
-    updated_at TIMESTAMPTZ NOT NULL,
-
-    CHECK (quantity >= 0),
-
-    CHECK (reserved_quantity >= 0),
-
-    CHECK (reserved_quantity <= quantity)
-);
-
-
--- =========================================================
--- 13. STOCK MOVEMENTS
--- =========================================================
-
-CREATE TABLE stock_movements (
-    id UUID PRIMARY KEY,
-
-    variant_id UUID NOT NULL
-        REFERENCES product_variants(id),
-
-    movement_type VARCHAR(30) NOT NULL,
-
-    quantity INT NOT NULL,
-
-    reference_type VARCHAR(50),
-    reference_id UUID,
-
-    note TEXT,
-
-    created_at TIMESTAMPTZ NOT NULL,
-
-    CHECK (
-        movement_type IN (
-            'IMPORT',
-            'SALE',
-            'RETURN',
-            'ADJUSTMENT'
-        )
-    ),
-
-    CHECK (quantity <> 0)
-);
-
-
--- =========================================================
--- 14. CARTS
+-- 11. CARTS
 -- =========================================================
 
 CREATE TABLE carts (
@@ -309,7 +233,7 @@ CREATE TABLE carts (
 
 
 -- =========================================================
--- 15. CART ITEMS
+-- 12. CART ITEMS
 -- =========================================================
 
 CREATE TABLE cart_items (
@@ -334,7 +258,7 @@ CREATE TABLE cart_items (
 
 
 -- =========================================================
--- 16. WISHLISTS
+-- 13. WISHLISTS
 -- =========================================================
 
 CREATE TABLE wishlists (
@@ -351,7 +275,7 @@ CREATE TABLE wishlists (
 
 
 -- =========================================================
--- 17. COUPONS
+-- 14. COUPONS
 -- =========================================================
 
 CREATE TABLE coupons (
@@ -415,7 +339,7 @@ CREATE TABLE coupons (
 
 
 -- =========================================================
--- 18. ORDERS
+-- 15. ORDERS
 -- =========================================================
 
 CREATE TABLE orders (
@@ -486,7 +410,7 @@ CREATE TABLE orders (
 
 
 -- =========================================================
--- 19. ORDER ITEMS
+-- 16. ORDER ITEMS
 -- =========================================================
 
 CREATE TABLE order_items (
@@ -523,7 +447,7 @@ CREATE TABLE order_items (
 
 
 -- =========================================================
--- 20. ORDER ADDRESSES
+-- 17. ORDER ADDRESSES
 -- =========================================================
 
 CREATE TABLE order_addresses (
@@ -540,7 +464,7 @@ CREATE TABLE order_addresses (
 
 
 -- =========================================================
--- 21. ORDER STATUS HISTORY
+-- 18. ORDER STATUS HISTORY
 -- =========================================================
 
 CREATE TABLE order_status_history (
@@ -586,7 +510,7 @@ CREATE TABLE order_status_history (
 
 
 -- =========================================================
--- 22. COUPON USAGES
+-- 19. COUPON USAGES
 -- =========================================================
 
 CREATE TABLE coupon_usages (
@@ -610,7 +534,7 @@ CREATE TABLE coupon_usages (
 
 
 -- =========================================================
--- 23. PAYMENTS
+-- 20. PAYMENTS
 -- =========================================================
 
 CREATE TABLE payments (
@@ -657,7 +581,7 @@ CREATE TABLE payments (
 
 
 -- =========================================================
--- 24. REFUNDS
+-- 21. REFUNDS
 -- =========================================================
 
 CREATE TABLE refunds (
@@ -695,7 +619,7 @@ CREATE TABLE refunds (
 
 
 -- =========================================================
--- 25. SHIPMENTS
+-- 22. SHIPMENTS
 -- =========================================================
 
 CREATE TABLE shipments (
@@ -729,7 +653,7 @@ CREATE TABLE shipments (
 
 
 -- =========================================================
--- 26. REVIEWS
+-- 23. REVIEWS
 -- =========================================================
 
 CREATE TABLE reviews (
@@ -767,7 +691,7 @@ CREATE TABLE reviews (
 
 
 -- =========================================================
--- 27. USER EVENTS
+-- 24. USER EVENTS
 -- =========================================================
 
 CREATE TABLE user_events (
@@ -814,7 +738,7 @@ CREATE TABLE user_events (
 
 
 -- =========================================================
--- 28. PRODUCT RELATIONS
+-- 25. PRODUCT RELATIONS
 -- =========================================================
 
 CREATE TABLE product_relations (
@@ -859,7 +783,7 @@ CREATE TABLE product_relations (
 
 
 -- =========================================================
--- 29. CUSTOMER LOYALTY
+-- 26. CUSTOMER LOYALTY
 -- =========================================================
 
 CREATE TABLE customer_loyalty (
@@ -952,9 +876,6 @@ ON categories(parent_id);
 CREATE INDEX idx_products_category_id
 ON products(category_id);
 
-CREATE INDEX idx_products_brand_id
-ON products(brand_id);
-
 CREATE INDEX idx_product_variants_product_id
 ON product_variants(product_id);
 
@@ -963,11 +884,6 @@ ON product_images(product_id);
 
 CREATE INDEX idx_product_images_variant_id
 ON product_images(variant_id);
-
-
--- INVENTORY
-CREATE INDEX idx_stock_movements_variant_id
-ON stock_movements(variant_id);
 
 
 -- CART
