@@ -138,7 +138,7 @@ CREATE TABLE products (
         REFERENCES categories(id),
 
     name VARCHAR(255) NOT NULL,
-    slug VARCHAR(300) NOT NULL UNIQUE,
+    slug VARCHAR(255) NOT NULL UNIQUE,
 
     short_description TEXT,
     description TEXT,

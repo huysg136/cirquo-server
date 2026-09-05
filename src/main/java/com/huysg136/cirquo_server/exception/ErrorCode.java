@@ -113,6 +113,18 @@ public enum ErrorCode {
         1402,
         HttpStatus.CONFLICT,
         "Category slug already exists!"
+    ),
+
+    PRODUCT_NOT_FOUND(
+            1403,
+            HttpStatus.NOT_FOUND,
+            "Product not found!"
+    ),
+
+    PRODUCT_SLUG_ALREADY_EXISTS(
+            1404,
+            HttpStatus.CONFLICT,
+            "Product slug already exists!"
     );
 
     private final int code;

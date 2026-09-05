@@ -50,7 +50,6 @@ public class CategoryController extends BaseController {
             summary = "Get active categories",
             description = "Returns all active product categories."
     )
-    @SecurityRequirement(name = "bearerAuth")
     @GetMapping
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllActiveCategories() {
         return success(
@@ -75,24 +74,6 @@ public class CategoryController extends BaseController {
                 HttpStatus.OK,
                 "Category updated successfully!",
                 categoryService.updateCategory(categoryId, categoryRequest)
-        );
-    }
-
-    @Operation(
-            summary = "Deactivate a category",
-            description = "Changes the category status to INACTIVE instead of deleting it permanently."
-    )
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    @DeleteMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse<Void>> deleteCategory(
-            @PathVariable UUID categoryId
-    ) {
-        categoryService.deleteCategory(categoryId);
-
-        return success(
-                HttpStatus.OK,
-                "Category deactivated successfully!",
-                null
         );
     }
 }

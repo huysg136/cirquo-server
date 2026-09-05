@@ -69,23 +69,16 @@ public class CategoryServiceImpl implements CategoryService {
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
 
+        CatalogStatus currentStatus = category.getStatus();
+
         categoryMapper.updateEntity(request, category);
         category.setParent(findParent(request.parentId()));
 
         if (request.status() == null) {
-            category.setStatus(CatalogStatus.ACTIVE);
+            category.setStatus(currentStatus);
         }
 
         return categoryMapper.toResponse(category);
-    }
-
-    @Transactional
-    @Override
-    public void deleteCategory(UUID id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(CategoryNotFoundException::new);
-
-        category.setStatus(CatalogStatus.INACTIVE);
     }
 
     private Category findParent(UUID parentId) {
