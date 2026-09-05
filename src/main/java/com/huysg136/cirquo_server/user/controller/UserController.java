@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +35,7 @@ public class UserController extends BaseController {
             summary = "Get all users",
             description = "Returns a list of all user accounts."
     )
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
         return success(
@@ -47,6 +49,10 @@ public class UserController extends BaseController {
             summary = "Get user by ID",
             description = "Returns the profile and account status of the specified user."
     )
+    @PreAuthorize("""
+        #userId.toString() == authentication.name
+        or hasAnyRole('ADMIN', 'STAFF')
+        """)
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(
             @PathVariable UUID userId
@@ -62,6 +68,10 @@ public class UserController extends BaseController {
             summary = "Update user profile",
             description = "Updates the email, full name, and phone number of the specified user."
     )
+    @PreAuthorize("""
+        #userId.toString() == authentication.name
+        or hasRole('ADMIN')
+        """)
     @PutMapping("/{userId}")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @PathVariable UUID userId,
@@ -79,6 +89,7 @@ public class UserController extends BaseController {
             summary = "Change user status",
             description = "Changes the account status to ACTIVE, INACTIVE, or SUSPENDED without deleting the user."
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{userId}/status")
     public ResponseEntity<ApiResponse<Void>> changeStatus(
             @PathVariable UUID userId,
@@ -97,6 +108,7 @@ public class UserController extends BaseController {
             summary = "Change user role",
             description = "Changes the role of the specified user."
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{userId}/role")
     public ResponseEntity<ApiResponse<UserResponse>> changeRole(
             @PathVariable UUID userId,

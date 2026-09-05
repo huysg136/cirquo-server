@@ -64,6 +64,12 @@ public enum ErrorCode {
             "Authentication is required!"
     ),
 
+    ACCESS_DENIED(
+            1107,
+            HttpStatus.FORBIDDEN,
+            "You do not have permission to perform this action!"
+    ),
+
     // User: 1200 - 1299
     EMAIL_ALREADY_EXISTS(
             1201,
@@ -94,6 +100,19 @@ public enum ErrorCode {
             1301,
             HttpStatus.NOT_FOUND,
             "User address not found!"
+    ),
+
+    // Catalog: 1400 - 1499
+    CATEGORY_NOT_FOUND(
+        1401,
+        HttpStatus.NOT_FOUND,
+        "Category not found!"
+    ),
+
+    CATEGORY_SLUG_ALREADY_EXISTS(
+        1402,
+        HttpStatus.CONFLICT,
+        "Category slug already exists!"
     );
 
     private final int code;
