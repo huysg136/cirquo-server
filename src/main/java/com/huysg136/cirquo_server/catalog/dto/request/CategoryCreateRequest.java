@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
 
-public record CategoryRequest(
+public record CategoryCreateRequest(
         UUID parentId,
 
         @NotBlank(message = "Category name is required!")

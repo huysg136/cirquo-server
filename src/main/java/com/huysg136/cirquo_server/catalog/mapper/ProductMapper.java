@@ -1,6 +1,7 @@
 package com.huysg136.cirquo_server.catalog.mapper;
 
-import com.huysg136.cirquo_server.catalog.dto.request.ProductRequest;
+import com.huysg136.cirquo_server.catalog.dto.request.ProductCreateRequest;
+import com.huysg136.cirquo_server.catalog.dto.request.ProductUpdateRequest;
 import com.huysg136.cirquo_server.catalog.dto.response.ProductResponse;
 import com.huysg136.cirquo_server.catalog.entity.Product;
 import org.mapstruct.Mapper;
@@ -18,11 +19,12 @@ public interface ProductMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    Product toEntity(ProductRequest request);
+    Product toEntity(ProductCreateRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    void updateEntity(ProductRequest request, @MappingTarget Product product);
+    void updateEntity(ProductUpdateRequest request, @MappingTarget Product product);
 }

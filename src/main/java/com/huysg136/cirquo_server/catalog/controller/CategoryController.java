@@ -1,26 +1,29 @@
 package com.huysg136.cirquo_server.catalog.controller;
 
-import com.huysg136.cirquo_server.catalog.dto.request.CategoryRequest;
 import com.huysg136.cirquo_server.catalog.dto.response.CategoryResponse;
+import com.huysg136.cirquo_server.catalog.dto.response.ProductCursorResponse;
 import com.huysg136.cirquo_server.catalog.service.CategoryService;
+import com.huysg136.cirquo_server.catalog.service.ProductService;
 import com.huysg136.cirquo_server.common.ApiResponse;
 import com.huysg136.cirquo_server.common.BaseController;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.UUID;
 
 @Tag(
-        name = "Categories",
-        description = "Manage product categories"
+        name = "Storefront Categories",
+        description = "Browse active product categories"
 )
 @RestController
 @RequestMapping("/api/v1/categories")
@@ -28,23 +31,7 @@ import java.util.UUID;
 public class CategoryController extends BaseController {
 
     private final CategoryService categoryService;
-
-    @Operation(
-            summary = "Create a category",
-            description = "Creates a product category. The parent category is optional."
-    )
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    @PostMapping
-    public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
-            @Valid @RequestBody CategoryRequest categoryRequest
-    ) {
-        return success(
-                HttpStatus.CREATED,
-                "Category created successfully!",
-                categoryService.createCategory(categoryRequest)
-        );
-    }
+    private final ProductService productService;
 
     @Operation(
             summary = "Get active categories",
@@ -60,20 +47,41 @@ public class CategoryController extends BaseController {
     }
 
     @Operation(
-            summary = "Update a category",
-            description = "Updates a product category."
+            summary = "Get an active category by slug",
+            description = "Returns an active category for the storefront."
     )
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    @PutMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
-            @PathVariable UUID categoryId,
-            @Valid @RequestBody CategoryRequest categoryRequest
+    @GetMapping("/{slug}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> getActiveCategoryBySlug(
+            @PathVariable String slug
     ) {
         return success(
                 HttpStatus.OK,
-                "Category updated successfully!",
-                categoryService.updateCategory(categoryId, categoryRequest)
+                "Category retrieved successfully!",
+                categoryService.getActiveCategoryBySlug(slug)
+        );
+    }
+
+    @Operation(
+            summary = "Get active products by category",
+            description = "Returns active products in an active category using cursor pagination."
+    )
+    @GetMapping("/{categorySlug}/products")
+    public ResponseEntity<ApiResponse<ProductCursorResponse>> getActiveProductsByCategory(
+            @PathVariable String categorySlug,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "12")
+            @Min(value = 1, message = "Size must be greater than 0!")
+            @Max(value = 100, message = "Size must not exceed 100!")
+            int size
+    ) {
+        return success(
+                HttpStatus.OK,
+                "Products retrieved successfully!",
+                productService.getActiveProductsByCategorySlug(
+                        categorySlug,
+                        cursor,
+                        size
+                )
         );
     }
 }

@@ -12,92 +12,103 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @Tag(
-        name = "User Addresses",
-        description = "Manage delivery addresses for a user"
+        name = "Addresses",
+        description = "Manage the authenticated user's delivery addresses"
 )
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("""
-        #userId.toString() == authentication.name
-        or hasRole('ADMIN')
-        """)
 @RestController
-@RequestMapping("/api/v1/users/{userId}/addresses")
+@RequestMapping("/api/v1/addresses")
 @RequiredArgsConstructor
 public class UserAddressController extends BaseController {
+
     private final UserAddressService userAddressService;
 
     @Operation(
-            summary = "Create a user address",
-            description = "Creates a delivery address for the specified user. A default address replaces the user's current default address."
+            summary = "Create an address",
+            description = "Creates a delivery address for the authenticated user."
     )
     @PostMapping
-    public ResponseEntity<ApiResponse<UserAddressResponse>> createAddress (
-            @PathVariable UUID userId,
-            @Valid @RequestBody UserAddressRequest userAddressRequest
+    public ResponseEntity<ApiResponse<UserAddressResponse>> createAddress(
+            Authentication authentication,
+            @Valid @RequestBody UserAddressRequest request
     ) {
-
         return success(
                 HttpStatus.CREATED,
                 "User address created successfully!",
-                userAddressService.createAddress(userId, userAddressRequest)
+                userAddressService.createAddress(
+                        getCurrentUserId(authentication),
+                        request
+                )
         );
     }
 
     @Operation(
-            summary = "Get user addresses",
-            description = "Returns all delivery addresses of the specified user, with the default address first."
+            summary = "Get current user's addresses",
+            description = "Returns the authenticated user's delivery addresses with the default first."
     )
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UserAddressResponse>>> getAllByUserId (
-            @PathVariable UUID userId
-    ){
+    public ResponseEntity<ApiResponse<List<UserAddressResponse>>> getAddresses(
+            Authentication authentication
+    ) {
         return success(
                 HttpStatus.OK,
                 "User addresses retrieved successfully!",
-                userAddressService.getAllByUserId(userId)
+                userAddressService.getAllByUserId(
+                        getCurrentUserId(authentication)
+                )
         );
     }
 
     @Operation(
-            summary = "Update a user address",
-            description = "Updates a delivery address owned by the specified user. Setting defaultAddress to true makes it the default address."
+            summary = "Update an address",
+            description = "Updates an address owned by the authenticated user."
     )
     @PutMapping("/{addressId}")
-    public ResponseEntity<ApiResponse<UserAddressResponse>> updateAddress (
-            @PathVariable UUID userId,
+    public ResponseEntity<ApiResponse<UserAddressResponse>> updateAddress(
+            Authentication authentication,
             @PathVariable UUID addressId,
-            @Valid @RequestBody UserAddressRequest userAddressRequest
-    ){
-
-        return  success(
+            @Valid @RequestBody UserAddressRequest request
+    ) {
+        return success(
                 HttpStatus.OK,
                 "User address updated successfully!",
-                userAddressService.updateAddress(userId, addressId, userAddressRequest)
+                userAddressService.updateAddress(
+                        getCurrentUserId(authentication),
+                        addressId,
+                        request
+                )
         );
     }
 
     @Operation(
-            summary = "Delete a user address",
-            description = "Permanently removes a delivery address owned by the specified user."
+            summary = "Delete an address",
+            description = "Permanently removes an address owned by the authenticated user."
     )
     @DeleteMapping("/{addressId}")
     public ResponseEntity<ApiResponse<Void>> deleteAddress(
-            @PathVariable UUID userId,
+            Authentication authentication,
             @PathVariable UUID addressId
     ) {
-        userAddressService.deleteAddress(userId ,addressId);
+        userAddressService.deleteAddress(
+                getCurrentUserId(authentication),
+                addressId
+        );
 
         return success(
                 HttpStatus.OK,
                 "User address deleted successfully!",
                 null
         );
+    }
+
+    private UUID getCurrentUserId(Authentication authentication) {
+        return UUID.fromString(authentication.getName());
     }
 }

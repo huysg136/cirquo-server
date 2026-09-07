@@ -1,6 +1,7 @@
 package com.huysg136.cirquo_server.catalog.service.impl;
 
-import com.huysg136.cirquo_server.catalog.dto.request.CategoryRequest;
+import com.huysg136.cirquo_server.catalog.dto.request.CategoryCreateRequest;
+import com.huysg136.cirquo_server.catalog.dto.request.CategoryUpdateRequest;
 import com.huysg136.cirquo_server.catalog.dto.response.CategoryResponse;
 import com.huysg136.cirquo_server.catalog.entity.Category;
 import com.huysg136.cirquo_server.catalog.enums.CatalogStatus;
@@ -27,7 +28,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Transactional
     @Override
-    public CategoryResponse createCategory(CategoryRequest request) {
+    public CategoryResponse createCategory(CategoryCreateRequest request) {
         if (categoryRepository.existsBySlug(request.slug())) {
             throw new CategorySlugAlreadyExistsException();
         }
@@ -55,11 +56,39 @@ public class CategoryServiceImpl implements CategoryService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public CategoryResponse getActiveCategoryBySlug(String slug) {
+        Category category = categoryRepository
+                .findBySlugAndStatus(slug, CatalogStatus.ACTIVE)
+                .orElseThrow(CategoryNotFoundException::new);
+
+        return categoryMapper.toResponse(category);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<CategoryResponse> getCategoriesForAdmin(
+            CatalogStatus status,
+            String keyword
+    ) {
+        return categoryRepository
+                .findForAdmin(status, normalizeKeyword(keyword))
+                .stream()
+                .map(categoryMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public CategoryResponse getCategoryById(UUID categoryId) {
+        return categoryMapper.toResponse(findCategory(categoryId));
+    }
+
     @Transactional
     @Override
-    public CategoryResponse updateCategory(UUID id, CategoryRequest request) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(CategoryNotFoundException::new);
+    public CategoryResponse updateCategory(UUID id, CategoryUpdateRequest request) {
+        Category category = findCategory(id);
 
         if (categoryRepository.existsBySlugAndIdNot(request.slug(), id)) {
             throw new CategorySlugAlreadyExistsException();
@@ -69,16 +98,22 @@ public class CategoryServiceImpl implements CategoryService {
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
 
-        CatalogStatus currentStatus = category.getStatus();
-
         categoryMapper.updateEntity(request, category);
         category.setParent(findParent(request.parentId()));
 
-        if (request.status() == null) {
-            category.setStatus(currentStatus);
-        }
-
         return categoryMapper.toResponse(category);
+    }
+
+    @Transactional
+    @Override
+    public void changeStatus(UUID categoryId, CatalogStatus status) {
+        Category category = findCategory(categoryId);
+        category.setStatus(status);
+    }
+
+    private Category findCategory(UUID categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(CategoryNotFoundException::new);
     }
 
     private Category findParent(UUID parentId) {
@@ -88,5 +123,13 @@ public class CategoryServiceImpl implements CategoryService {
 
         return categoryRepository.findById(parentId)
                 .orElseThrow(CategoryNotFoundException::new);
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+
+        return keyword.trim();
     }
 }

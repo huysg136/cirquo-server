@@ -1,5 +1,6 @@
 package com.huysg136.cirquo_server.user.service.impl;
 
+import com.huysg136.cirquo_server.common.PageResponse;
 import com.huysg136.cirquo_server.user.dto.response.UserResponse;
 import com.huysg136.cirquo_server.user.entity.Role;
 import com.huysg136.cirquo_server.user.entity.User;
@@ -13,10 +14,11 @@ import com.huysg136.cirquo_server.user.repository.UserRepository;
 import com.huysg136.cirquo_server.user.service.UserService;
 import com.huysg136.cirquo_server.user.dto.request.UpdateUserRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -29,8 +31,29 @@ public class UserServiceImpl implements UserService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAllWithRole().stream().map(userMapper::toResponse).toList();
+    public PageResponse<UserResponse> getUsersForAdmin(
+            UserStatus status,
+            RoleName roleName,
+            String keyword,
+            int page,
+            int size
+    ) {
+        return PageResponse.from(
+                userRepository.findForAdmin(
+                        status,
+                        roleName,
+                        normalizeKeyword(keyword),
+                        PageRequest.of(
+                                page,
+                                size,
+                                Sort.by(
+                                        Sort.Order.desc("createdAt"),
+                                        Sort.Order.desc("id")
+                                )
+                        )
+                ),
+                userMapper::toResponse
+        );
     }
 
     @Transactional(readOnly = true)
@@ -84,5 +107,13 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
 
         return userMapper.toResponse(savedUser);
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+
+        return keyword.trim();
     }
 }

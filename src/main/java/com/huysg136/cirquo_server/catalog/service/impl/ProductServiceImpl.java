@@ -1,6 +1,7 @@
 package com.huysg136.cirquo_server.catalog.service.impl;
 
-import com.huysg136.cirquo_server.catalog.dto.request.ProductRequest;
+import com.huysg136.cirquo_server.catalog.dto.request.ProductCreateRequest;
+import com.huysg136.cirquo_server.catalog.dto.request.ProductUpdateRequest;
 import com.huysg136.cirquo_server.catalog.dto.response.ProductCursorResponse;
 import com.huysg136.cirquo_server.catalog.dto.response.ProductResponse;
 import com.huysg136.cirquo_server.catalog.entity.Category;
@@ -13,6 +14,7 @@ import com.huysg136.cirquo_server.catalog.mapper.ProductMapper;
 import com.huysg136.cirquo_server.catalog.repository.CategoryRepository;
 import com.huysg136.cirquo_server.catalog.repository.ProductRepository;
 import com.huysg136.cirquo_server.catalog.service.ProductService;
+import com.huysg136.cirquo_server.common.PageResponse;
 import com.huysg136.cirquo_server.exception.AppException;
 import com.huysg136.cirquo_server.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +39,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional
     @Override
-    public ProductResponse createProduct(ProductRequest request) {
-        if (productRepository.existsBySlug(request.slug())){
+    public ProductResponse createProduct(ProductCreateRequest request) {
+        if (productRepository.existsBySlug(request.slug())) {
             throw new ProductSlugAlreadyExistsException();
         }
 
@@ -52,10 +54,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional(readOnly = true)
     @Override
-    public ProductCursorResponse getActiveProducts(
+    public ProductCursorResponse getActiveProductsByCategorySlug(
+            String categorySlug,
             String cursor,
             int size
     ) {
+        Category category = categoryRepository
+                .findBySlugAndStatus(categorySlug, CatalogStatus.ACTIVE)
+                .orElseThrow(CategoryNotFoundException::new);
+
         PageRequest pageable = PageRequest.of(
                 0,
                 size + 1
@@ -64,14 +71,16 @@ public class ProductServiceImpl implements ProductService {
         List<Product> products;
 
         if (cursor == null || cursor.isBlank()) {
-            products = productRepository.findByStatusOrderByCreatedAtDescIdDesc(
+            products = productRepository.findByCategoryIdAndStatusOrderByCreatedAtDescIdDesc(
+                    category.getId(),
                     CatalogStatus.ACTIVE,
                     pageable
             );
         } else {
             ProductCursor productCursor = decodeCursor(cursor);
 
-            products = productRepository.findByStatusAfterCursor(
+            products = productRepository.findByCategoryAndStatusAfterCursor(
+                    category.getId(),
                     CatalogStatus.ACTIVE,
                     productCursor.createdAt(),
                     productCursor.id(),
@@ -109,17 +118,53 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse getActiveProductBySlug(String slug) {
         Product product = productRepository
-                .findBySlugAndStatus(slug, CatalogStatus.ACTIVE)
+                .findBySlugAndStatusAndCategoryStatus(
+                        slug,
+                        CatalogStatus.ACTIVE,
+                        CatalogStatus.ACTIVE
+                )
                 .orElseThrow(ProductNotFoundException::new);
 
         return productMapper.toResponse(product);
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public PageResponse<ProductResponse> getProductsForAdmin(
+            UUID categoryId,
+            CatalogStatus status,
+            String keyword,
+            int page,
+            int size
+    ) {
+        return PageResponse.from(
+                productRepository.findForAdmin(
+                        categoryId,
+                        status,
+                        normalizeKeyword(keyword),
+                        PageRequest.of(
+                                page,
+                                size,
+                                Sort.by(
+                                        Sort.Order.desc("createdAt"),
+                                        Sort.Order.desc("id")
+                                )
+                        )
+                ),
+                productMapper::toResponse
+        );
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public ProductResponse getProductById(UUID productId) {
+        return productMapper.toResponse(findProduct(productId));
+    }
+
     @Transactional
     @Override
-    public ProductResponse updateProduct(UUID productId, ProductRequest request) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(ProductNotFoundException::new);
+    public ProductResponse updateProduct(UUID productId, ProductUpdateRequest request) {
+        Product product = findProduct(productId);
 
         if (productRepository.existsBySlugAndIdNot(
                 request.slug(),
@@ -128,16 +173,22 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductSlugAlreadyExistsException();
         }
 
-        CatalogStatus currentStatus = product.getStatus();
-
         productMapper.updateEntity(request, product);
         product.setCategory(findCategory(request.categoryId()));
 
-        if (request.status() == null) {
-            product.setStatus(currentStatus);
-        }
-
         return productMapper.toResponse(product);
+    }
+
+    @Transactional
+    @Override
+    public void changeStatus(UUID productId, CatalogStatus status) {
+        Product product = findProduct(productId);
+        product.setStatus(status);
+    }
+
+    private Product findProduct(UUID productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(ProductNotFoundException::new);
     }
 
     private Category findCategory(UUID categoryId) {
@@ -172,6 +223,14 @@ public class ProductServiceImpl implements ProductService {
         } catch (Exception exception) {
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+
+        return keyword.trim();
     }
 
     private record ProductCursor(

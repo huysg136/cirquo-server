@@ -67,7 +67,8 @@ Target structure:
 ```text
 user/
 ├── controller/
-│   ├── UserController.java
+│   ├── ProfileController.java
+│   ├── AdminUserController.java
 │   └── UserAddressController.java
 ├── dto/
 │   ├── request/
@@ -109,15 +110,29 @@ Mapping decision:
 
 - `role_permissions`: map quan hệ nhiều-nhiều giữa `Role` và `Permission`; chưa cần `RolePermission.java` vì bảng không có field bổ sung.
 - `user_permissions`: map permission bổ sung của `User`; chưa cần `UserPermission.java` vì bảng không có field bổ sung.
-- `UserAddressController` chỉ được tạo khi bắt đầu API quản lý địa chỉ.
+- Profile và Address lấy user hiện tại từ access token, không nhận `userId` của chính customer từ URL.
+- Admin User API dùng `userId` vì admin/staff thao tác trên tài khoản được chọn.
 
-Current tasks:
+User API:
 
-- Đồng bộ `User` với schema: `role_id`, `password_hash`, độ dài và nullable.
-- Chuẩn hóa response của toàn bộ UserController.
-- Kiểm tra email trùng trước khi tạo/cập nhật.
-- Hoàn thiện exception `USER_NOT_FOUND` và `EMAIL_ALREADY_EXISTS`.
-- Sau CRUD User mới triển khai UserAddress.
+```text
+Customer
+GET   /api/v1/profile
+PUT   /api/v1/profile
+PATCH /api/v1/auth/password
+
+GET    /api/v1/addresses
+POST   /api/v1/addresses
+PUT    /api/v1/addresses/{addressId}
+DELETE /api/v1/addresses/{addressId}
+
+Admin
+GET   /api/v1/admin/users?status=&roleName=&keyword=&page=&size=
+GET   /api/v1/admin/users/{userId}
+PUT   /api/v1/admin/users/{userId}
+PATCH /api/v1/admin/users/{userId}/status
+PATCH /api/v1/admin/users/{userId}/role
+```
 
 ## 4. Auth feature
 
@@ -193,6 +208,35 @@ Thứ tự triển khai Catalog:
 4. ProductImage CRUD: ảnh chung/ảnh variant, ảnh chính, thứ tự hiển thị.
 5. Public API: danh sách phân trang, lọc category, tìm kiếm, chi tiết theo slug.
 ```
+
+Phân tách Catalog API:
+
+```text
+Storefront (permitAll)
+GET /api/v1/categories
+GET /api/v1/categories/{slug}
+GET /api/v1/categories/{categorySlug}/products?cursor=&size=
+GET /api/v1/products/{slug}
+
+Admin (ADMIN hoặc STAFF)
+GET   /api/v1/admin/categories
+GET   /api/v1/admin/categories/{id}
+POST  /api/v1/admin/categories
+PUT   /api/v1/admin/categories/{id}
+PATCH /api/v1/admin/categories/{id}/status
+
+GET   /api/v1/admin/products
+GET   /api/v1/admin/products/{id}
+POST  /api/v1/admin/products
+PUT   /api/v1/admin/products/{id}
+PATCH /api/v1/admin/products/{id}/status
+```
+
+- Storefront chỉ trả Category và Product đang `ACTIVE`.
+- Danh sách storefront theo Category dùng cursor pagination; Home gọi `size=4`, trang Category có thể gọi `size=12`.
+- Danh sách admin dùng page pagination để hỗ trợ tổng số bản ghi và chuyển trang trong bảng quản trị.
+- `PUT` chỉ sửa thông tin; trạng thái được đổi riêng bằng `PATCH /status`.
+- Category và Product không xóa cứng trong MVP; chuyển sang `INACTIVE` để giữ quan hệ dữ liệu.
 
 ## 6. Shopping feature
 

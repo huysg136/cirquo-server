@@ -2,7 +2,9 @@ package com.huysg136.cirquo_server.catalog.repository;
 
 import com.huysg136.cirquo_server.catalog.entity.Product;
 import com.huysg136.cirquo_server.catalog.enums.CatalogStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,20 +19,26 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     boolean existsBySlugAndIdNot(String slug, UUID productId);
 
-    Optional<Product> findBySlugAndStatus(
+    @EntityGraph(attributePaths = "category")
+    Optional<Product> findBySlugAndStatusAndCategoryStatus(
             String slug,
-            CatalogStatus status
+            CatalogStatus status,
+            CatalogStatus categoryStatus
     );
 
-    List<Product> findByStatusOrderByCreatedAtDescIdDesc(
+    @EntityGraph(attributePaths = "category")
+    List<Product> findByCategoryIdAndStatusOrderByCreatedAtDescIdDesc(
+            UUID categoryId,
             CatalogStatus status,
             Pageable pageable
     );
 
+    @EntityGraph(attributePaths = "category")
     @Query("""
         SELECT p
         FROM Product p
-        WHERE p.status = :status
+        WHERE p.category.id = :categoryId
+          AND p.status = :status
           AND (
               p.createdAt < :cursorCreatedAt
               OR (
@@ -40,10 +48,30 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
           )
         ORDER BY p.createdAt DESC, p.id DESC
         """)
-    List<Product> findByStatusAfterCursor(
+    List<Product> findByCategoryAndStatusAfterCursor(
+            @Param("categoryId") UUID categoryId,
             @Param("status") CatalogStatus status,
             @Param("cursorCreatedAt") OffsetDateTime cursorCreatedAt,
             @Param("cursorId") UUID cursorId,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = "category")
+    @Query("""
+        SELECT p
+        FROM Product p
+        WHERE (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:status IS NULL OR p.status = :status)
+          AND (
+              :keyword IS NULL
+              OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.slug) LIKE LOWER(CONCAT('%', :keyword, '%'))
+          )
+        """)
+    Page<Product> findForAdmin(
+            @Param("categoryId") UUID categoryId,
+            @Param("status") CatalogStatus status,
+            @Param("keyword") String keyword,
             Pageable pageable
     );
 }

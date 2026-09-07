@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -83,13 +83,15 @@ public class AuthController extends BaseController {
             description = "Changes the password of the specified user after verifying the current password."
     )
     @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("#userId.toString() == authentication.name")
-    @PatchMapping("/users/{userId}/password")
+    @PatchMapping("/password")
     public ResponseEntity<ApiResponse<Void>> changePassword(
-            @PathVariable UUID userId,
+            Authentication authentication,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
-        authService.changePassword(userId, request);
+        authService.changePassword(
+                UUID.fromString(authentication.getName()),
+                request
+        );
 
         return success(
                 HttpStatus.OK,
