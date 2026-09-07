@@ -64,8 +64,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
           AND (:status IS NULL OR p.status = :status)
           AND (
               :keyword IS NULL
-              OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.slug) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
+              OR LOWER(p.slug) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
           )
         """)
     Page<Product> findForAdmin(

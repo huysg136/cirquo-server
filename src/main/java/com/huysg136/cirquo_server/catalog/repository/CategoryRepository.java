@@ -28,8 +28,8 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
         WHERE (:status IS NULL OR c.status = :status)
           AND (
               :keyword IS NULL
-              OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(c.slug) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
+              OR LOWER(c.slug) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
           )
         ORDER BY c.name ASC
         """)

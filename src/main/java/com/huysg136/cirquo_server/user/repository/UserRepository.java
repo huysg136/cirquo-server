@@ -28,8 +28,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
           AND (:roleName IS NULL OR u.role.name = :roleName)
           AND (
               :keyword IS NULL
-              OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
+              OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
           )
         """)
     Page<User> findForAdmin(
