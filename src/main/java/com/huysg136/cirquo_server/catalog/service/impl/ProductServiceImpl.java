@@ -97,7 +97,7 @@ public class ProductServiceImpl implements ProductService {
         String nextCursor = null;
 
         if (hasNext && !products.isEmpty()) {
-            Product lastProduct = products.getLast();
+            Product lastProduct = products.get(products.size() - 1);
 
             nextCursor = encodeCursor(
                     lastProduct.getCreatedAt(),
